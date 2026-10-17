@@ -18,3 +18,5 @@ Catatan:
 - Backup JSON sekarang juga menyimpan tanggal mulai/selesai dan status pengaturan kegiatan.
 - Folder assets pada paket ini berisi logo.svg, logo.png, favicon.svg, favicon.png, favicon.ico. Jika ingin menampilkan Konsep 1 dan 2 di galeri pengaturan, tambahkan assets/logo-dompet.png dan assets/logo-koin.png dengan nama persis tersebut.
 - Setelah deploy, tutup aplikasi dan buka kembali/refresh. Service Worker dinaikkan ke v3 agar file terbaru terambil.
+
+Catatan: Rentang waktu kegiatan/laporan otomatis dihitung dari tanggal transaksi paling awal sampai paling akhir. Tidak perlu mengisi tanggal mulai atau selesai secara manual. Jika belum ada transaksi, rentang ditampilkan sebagai “Belum ada transaksi”.

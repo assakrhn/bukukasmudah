@@ -751,15 +751,14 @@ async function showDetail(id) {
       </div>
       <div id="settingsSummary" ${k.pengaturanSelesai ? '' : 'hidden'} style="margin-top:12px">
         <p class="muted" style="margin:0 0 8px">Nama: <b>${esc(k.nama)}</b></p>
-        <p class="muted" style="margin:0 0 8px">Rentang waktu: <b>${k.tanggalMulai ? tgl(k.tanggalMulai) : '-'} – ${k.tanggalSelesai ? tgl(k.tanggalSelesai) : '-'}</b></p>
+        <p class="muted" style="margin:0 0 8px">Rentang waktu transaksi: <b id="settingsPeriod">Mengikuti tanggal transaksi</b></p>
         <p class="muted" style="margin:0">Target dana: <b>${rp(k.target)}</b></p>
       </div>
       <form id="setForm" novalidate ${k.pengaturanSelesai ? 'hidden' : ''} style="margin-top:14px">
         <div class="grid2">
           <div class="f"><label for="s-nama">Nama kegiatan</label><input id="s-nama" name="nama" type="text" maxlength="60" value="${esc(k.nama)}" required></div>
           <div class="f"><label for="s-target">Target dana</label><div class="money"><span>Rp</span><input id="s-target" name="target" inputmode="numeric" autocomplete="off" value="${fmtInput(k.target)}" placeholder="0"></div></div>
-          <div class="f"><label for="s-mulai">Tanggal mulai kegiatan</label><input id="s-mulai" name="tanggalMulai" type="date" value="${esc(k.tanggalMulai || '')}"></div>
-          <div class="f"><label for="s-selesai">Tanggal selesai kegiatan</label><input id="s-selesai" name="tanggalSelesai" type="date" value="${esc(k.tanggalSelesai || '')}"></div>
+
         </div>
         <p class="err" id="setErr" role="alert"></p>
         <div class="row">
@@ -840,6 +839,8 @@ async function refreshDetail() {
   const list = await txOf(cur.id);
   const c = compute(list);
   curRows = c.rows;
+  const periodEl = $('#settingsPeriod');
+  if (periodEl) periodEl.textContent = periode(c.rows);
   const sel = cur.target - c.saldo;
   $('#score').innerHTML = `
     <div class="score s1"><span>Target Dana</span><strong>${rp(cur.target)}</strong><small><button type="button" class="btn btn-ghost btn-sm" data-act="edit-target">✎ Edit Target</button></small></div>
@@ -879,12 +880,9 @@ async function saveSettings(e) {
   e.preventDefault();
   const f = e.target, err = $('#setErr');
   const nama = f.nama.value.trim();
-  const tanggalMulai = f.tanggalMulai.value;
-  const tanggalSelesai = f.tanggalSelesai.value;
   if (!nama) { err.textContent = 'Nama kegiatan tidak boleh kosong.'; return; }
-  if (tanggalMulai && tanggalSelesai && tanggalSelesai < tanggalMulai) { err.textContent = 'Tanggal selesai tidak boleh sebelum tanggal mulai.'; return; }
   err.textContent = '';
-  cur = Object.assign({}, cur, { nama, target: parseNum(f.target.value), tanggalMulai, tanggalSelesai, pengaturanSelesai: true });
+  cur = Object.assign({}, cur, { nama, target: parseNum(f.target.value), pengaturanSelesai: true });
   await putK(cur);
   await showDetail(cur.id);
   toast('Pengaturan kegiatan disimpan.');
@@ -949,14 +947,15 @@ const clearPrint = () => { $('#printArea').innerHTML = ''; printUrls.forEach(u =
 
 function periode(rows) {
   if (!rows.length) return 'Belum ada transaksi';
-  const a = rows[0].tanggal, b = rows[rows.length - 1].tanggal;
+  const dates = rows.map(t => t.tanggal).filter(Boolean).sort();
+  if (!dates.length) return 'Belum ada transaksi';
+  const a = dates[0], b = dates[dates.length - 1];
   return a === b ? tgl(a) : tgl(a) + ' – ' + tgl(b);
 }
 
 function reportSection(k, list, withBreak) {
   const c = compute(list);
-  const start = k.tanggalMulai ? tgl(k.tanggalMulai) : (c.rows.length ? tgl(c.rows[0].tanggal) : '-');
-  const end = k.tanggalSelesai ? tgl(k.tanggalSelesai) : (c.rows.length ? tgl(c.rows[c.rows.length - 1].tanggal) : '-');
+  const rentang = periode(c.rows);
   const rows = c.rows.length ? c.rows.map((t, i) => `<tr>
       <td>${i + 1}</td><td>${tgl(t.tanggal)}<br>${jam(t.jam)}</td><td>${esc(t.item)}</td>
       <td class="n">${t.jenis === 'debit' ? rp(t.nominal) : '-'}</td>
@@ -965,7 +964,7 @@ function reportSection(k, list, withBreak) {
   let html = `<section class="${withBreak ? 'brk' : ''}">
     <div class="rhead"><div><b>Kas Mudah</b><br><span>Laporan Kas Kegiatan</span></div><span>Dicetak: ${tgl(todayStr())}</span></div>
     <h2 class="cover-title">${esc(k.nama)}</h2>
-    <p class="cover-sub">Rentang waktu kegiatan: ${start} – ${end}</p>
+    <p class="cover-sub">Rentang waktu transaksi: ${rentang}</p>
     <div class="scoregrid">
       <div class="scorebox"><b>Uang Rencana (Target Dana)</b><strong>${rp(k.target || 0)}</strong></div>
       <div class="scorebox"><b>Uang Pelaksanaan (Realisasi Masuk)</b><strong>${rp(c.masuk)}</strong></div>
@@ -1010,10 +1009,10 @@ async function exportReport(ids) {
   if (semua) {
     const summaries = sel.map(k => {
       const c = compute(ts.filter(t => t.kegiatanId === k.id));
-      return `<tr><td>${esc(k.nama)}</td><td>${k.tanggalMulai ? tgl(k.tanggalMulai) : '-'} – ${k.tanggalSelesai ? tgl(k.tanggalSelesai) : '-'}</td><td class="n">${rp(k.target || 0)}</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.saldo)}</td></tr>`;
+      return `<tr><td>${esc(k.nama)}</td><td>${periode(c.rows)}</td><td class="n">${rp(k.target || 0)}</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.saldo)}</td></tr>`;
     }).join('');
     html += `<section><div class="rhead"><div><b>Kas Mudah</b><br><span>Laporan Seluruh Kegiatan</span></div><span>Dicetak: ${tgl(todayStr())}</span></div><h2 class="cover-title">Ringkasan Seluruh Kegiatan</h2>
-      <table><thead><tr><th>Nama kegiatan</th><th>Rentang waktu kegiatan</th><th>Uang rencana</th><th>Uang pelaksanaan (masuk)</th><th>Saldo sisa</th></tr></thead><tbody>${summaries}</tbody></table></section>`;
+      <table><thead><tr><th>Nama kegiatan</th><th>Rentang waktu transaksi</th><th>Uang rencana</th><th>Uang pelaksanaan (masuk)</th><th>Saldo sisa</th></tr></thead><tbody>${summaries}</tbody></table></section>`;
     html += sel.map(k => reportSection(k, ts.filter(t => t.kegiatanId === k.id), true)).join('');
   } else {
     html += reportSection(sel[0], ts.filter(t => t.kegiatanId === sel[0].id), false);
