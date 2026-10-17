@@ -1,0 +1,20 @@
+{
+  "name": "Kas Mudah",
+  "short_name": "Kas Mudah",
+  "description": "Catatan pemasukan, pengeluaran, dan saldo kegiatan. Data tersimpan di perangkat dan bisa dipakai offline.",
+  "lang": "id",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6fa",
+  "theme_color": "#12284c",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

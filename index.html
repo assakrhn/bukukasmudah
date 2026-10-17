@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kas Mudah — Catatan Kegiatan</title>
+<meta name="description" content="Kas Mudah: catat pemasukan, pengeluaran, bukti transaksi, dan saldo setiap kegiatan. Offline dan tersimpan di perangkat.">
+<meta name="theme-color" content="#12284c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+
+<style>
+/* ==================== GAYA DASAR ==================== */
+:root{
+  --navy:#12284c; --navy2:#1e3a6e; --teal:#0a7d7a; --teal-l:#e0f3f2;
+  --bg:#f4f6fa; --card:#ffffff; --line:#e2e7ef; --text:#1b2433; --muted:#5d6b82;
+  --red:#b42318; --red-l:#fdecea; --green:#0a7d4a;
+  --r:14px; --sh:0 1px 2px rgba(18,40,76,.06),0 4px 14px rgba(18,40,76,.07);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;font-size:16px}
+h1,h2,h3{line-height:1.25;margin:0;color:var(--navy)}
+a{color:var(--teal)}
+:focus-visible{outline:3px solid #5cc8c4;outline-offset:2px}
+.muted{color:var(--muted)}
+[hidden]{display:none!important}
+
+.topbar{background:var(--navy);color:#fff}
+.topbar .in{max-width:1100px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:700;font-size:1.15rem}
+.brand-logo{height:40px;width:auto;max-width:120px;flex:none;display:block;background:#fff;border-radius:10px;padding:3px 6px}
+.nav a{color:#fff;text-decoration:none;font-weight:600;font-size:.92rem;padding:8px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.4);display:inline-block}
+.nav a:hover{background:rgba(255,255,255,.14)}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 32px}
+.foot{max-width:1100px;margin:0 auto;padding:0 16px 32px;color:var(--muted);font-size:.85rem}
+
+/* ==================== KOMPONEN ==================== */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:20px;margin-bottom:18px}
+.card h2{font-size:1.15rem;margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+.btn{font:inherit;font-weight:600;font-size:.95rem;border-radius:10px;border:1.5px solid transparent;padding:10px 16px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;transition:filter .15s,background .15s}
+.btn:hover{filter:brightness(.95)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-ghost{background:#fff;color:var(--navy);border-color:#c9d2e0}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger-ghost{background:#fff;color:var(--red);border-color:#efc3bf}
+.btn-sm{padding:6px 10px;min-height:34px;font-size:.85rem}
+
+.f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f label,.dlg-body label{font-weight:600;font-size:.92rem;color:var(--navy)}
+.f small{color:var(--muted)}
+input:not([type=file]),select,textarea{font:inherit;width:100%;padding:10px 12px;border:1.5px solid #c3cddd;border-radius:10px;background:#fff;color:var(--text);min-height:44px}
+textarea{resize:vertical}
+input[type=file]{font:inherit;font-size:.9rem;width:100%;padding:8px;border:1.5px dashed #c3cddd;border-radius:10px;background:#fafbfd}
+.money{display:flex;align-items:stretch}
+.money span{display:flex;align-items:center;padding:0 12px;background:var(--teal-l);color:var(--teal);font-weight:700;border:1.5px solid #c3cddd;border-right:0;border-radius:10px 0 0 10px}
+.money input{border-radius:0 10px 10px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.span2{grid-column:1 / -1}
+.err{color:var(--red);font-weight:600;min-height:1.4em;margin:12px 0 4px}
+
+/* ==================== HOME ==================== */
+.hero{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;border-radius:18px;padding:28px 24px;margin-bottom:18px;box-shadow:var(--sh)}
+.hero h1{color:#fff;font-size:clamp(1.5rem,4vw,2.1rem)}
+.hero p{margin:8px 0 18px;color:#d5dff0;max-width:640px}
+.hero .btn-ghost{border-color:transparent}
+.notice{background:#eaf6f6;border:1px solid #b8dedd;color:#134e4c;border-radius:var(--r);padding:14px 16px;margin-bottom:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.notice p{margin:0;flex:1 1 280px;font-size:.93rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.kcard{margin:0;display:flex;flex-direction:column;gap:14px}
+.kc-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.kc-head h3{font-size:1.1rem;word-break:break-word}
+.chip{background:var(--teal-l);color:var(--teal);font-size:.78rem;font-weight:700;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.kc-stats{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kc-stats div{background:#f6f8fc;border-radius:10px;padding:10px}
+.kc-stats dt{font-size:.78rem;color:var(--muted)}
+.kc-stats dd{margin:2px 0 0;font-weight:700;font-size:.98rem;word-break:break-word}
+.kc-stats .in dd{color:var(--green)} .kc-stats .out dd{color:var(--red)} .kc-stats .bal{background:var(--teal-l)} .kc-stats .bal dd{color:var(--navy)}
+.kc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.kc-actions .btn:first-child{grid-column:1 / -1}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+
+/* ==================== BACKUP & PEMULIHAN ==================== */
+.bk{display:flex;flex-direction:column;gap:12px}
+.bk h2,.bk p{margin:0}
+.bk-status,.bk-msg{padding:10px 12px;border-radius:10px;background:#f6f8fc;font-size:.93rem;border:1px solid var(--line)}
+.bk-status.warn{background:#fff7e0;border-color:#f0d58a;color:#6b4d00}
+.bk-status.ok{background:#e9f7ef;border-color:#bfe3cf;color:#14532d}
+.bk-msg.err{background:var(--red-l);border-color:#efc3bf;color:var(--red);font-weight:600}
+.bk-msg.ok{background:#e9f7ef;border-color:#bfe3cf;color:#14532d;font-weight:600}
+
+/* ==================== GALERI LOGO (PENGATURAN) ==================== */
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.gitem{margin:0;border:1px solid var(--line);border-radius:var(--r);padding:14px;background:#fff;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
+.gitem.main{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-l)}
+.gimg{width:100%;height:150px;display:flex;align-items:center;justify-content:center;background:#f6f8fc;border-radius:10px;overflow:hidden}
+.gimg img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.gimg .miss{padding:10px;color:var(--red);font-size:.85rem;font-weight:600}
+.gitem figcaption b{display:block;color:var(--navy)}
+.gitem figcaption span{font-size:.85rem;color:var(--muted)}
+
+/* ==================== DETAIL ==================== */
+.back{margin-bottom:14px}
+.dtitle{font-size:clamp(1.4rem,3.5vw,1.9rem);margin-bottom:14px;word-break:break-word}
+.scores{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.score{border-radius:var(--r);padding:18px;color:#fff;box-shadow:var(--sh);display:flex;flex-direction:column;gap:4px}
+.score span{font-size:.9rem;opacity:.92;font-weight:600}
+.score strong{font-size:clamp(1.3rem,3.2vw,1.7rem);word-break:break-word}
+.score small{opacity:.88}
+.s1{background:var(--navy)} .s2{background:var(--navy2)} .s3{background:var(--teal)}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px}
+table.tx{width:100%;min-width:1000px;border-collapse:collapse;font-size:.9rem;background:#fff}
+table.tx th{background:#eef2f8;color:var(--navy);text-align:left;padding:10px;white-space:nowrap;border-bottom:2px solid #cfd8e6}
+table.tx td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.tx tbody tr:hover{background:#fafcff}
+td.num,th.num{text-align:right;white-space:nowrap}
+td.in{color:var(--green)} td.out{color:var(--red)}
+td.act{white-space:nowrap}
+td.act .btn{margin:0 4px 4px 0}
+.thumb{border:1px solid #c3cddd;background:#fff;padding:2px;border-radius:8px;cursor:zoom-in;display:block}
+.thumb img{width:54px;height:54px;object-fit:cover;border-radius:6px;display:block}
+.editing-banner{background:#fff7e0;border:1px solid #f0d58a;color:#6b4d00;padding:8px 12px;border-radius:10px;margin-bottom:12px;font-weight:600}
+
+/* ==================== DIALOG & TOAST ==================== */
+dialog{border:0;border-radius:16px;padding:0;width:min(440px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(10,20,40,.55)}
+.dlg-in{padding:22px}
+.dlg-in h3{margin-bottom:12px}
+.dlg-body{margin-bottom:18px;display:flex;flex-direction:column;gap:8px}
+.dlg-actions{display:flex;justify-content:flex-end;gap:10px}
+#zoomDlg{width:auto;max-width:94vw;background:#fff}
+#zoomDlg img{display:block;max-width:100%;max-height:78vh;margin:0 auto;border-radius:8px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:92vw;font-weight:600;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:var(--red)}
+.loading{text-align:center;padding:60px 0;color:var(--muted)}
+.spin{width:34px;height:34px;border:4px solid #d5dce8;border-top-color:var(--teal);border-radius:50%;margin:0 auto 12px;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.errbox{background:var(--red-l);border:1px solid #efc3bf;color:var(--red);border-radius:var(--r);padding:18px}
+
+@media (max-width:720px){
+  .grid2{grid-template-columns:1fr}
+  .span2{grid-column:auto}
+  .scores{grid-template-columns:1fr}
+  .card{padding:16px}
+  .row .btn{flex:1 1 140px}
+}
+
+/* ==================== LAPORAN CETAK (PDF) ==================== */
+#printArea{display:none}
+@page{size:A4;margin:14mm 12mm 16mm}
+@page{@bottom-center{content:"Halaman " counter(page) " dari " counter(pages);font:10px Arial,sans-serif;color:#555}}
+@media print{
+  html,body{background:#fff!important}
+  #app,#toast,dialog{display:none!important}
+  #printArea{display:block;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea .rhead{border-bottom:3px solid #12284c;padding-bottom:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end}
+  #printArea .rhead b{font-size:19px;color:#12284c}
+  #printArea .rhead span{font-size:10px;color:#444}
+  #printArea h2{font-size:16px;color:#12284c;margin:0 0 2px;break-after:avoid;page-break-after:avoid}
+  #printArea .per{margin:0 0 8px;color:#333}
+  #printArea .brk{break-before:page;page-break-before:always}
+  #printArea table{width:100%;border-collapse:collapse;margin-bottom:12px}
+  #printArea th,#printArea td{border:1px solid #8794a8;padding:4px 5px;text-align:left;vertical-align:top;font-size:10px;word-break:break-word}
+  #printArea th{background:#e8eef7;color:#12284c}
+  #printArea thead{display:table-header-group}
+  #printArea tfoot{display:table-row-group}
+  #printArea tr{break-inside:avoid;page-break-inside:avoid}
+  #printArea .rtx thead th{border-bottom:2px solid #12284c}
+  #printArea .n{text-align:right;white-space:nowrap}
+  #printArea .tot td{font-weight:700;background:#f1f4f9}
+  #printArea img.pt{width:40px;height:40px;object-fit:cover;border:1px solid #888;display:block}
+  #printArea .none{padding:14px;border:1px dashed #888;text-align:center;color:#444}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header class="topbar">
+    <div class="in">
+      <a class="brand" href="#/" aria-label="Kas Mudah - ke halaman utama">
+        <img class="brand-logo" src="logo.svg" alt="" data-file="logo.svg">
+        <span>Kas Mudah</span>
+      </a>
+      <nav class="nav" aria-label="Menu"><a href="#/pengaturan">Pengaturan</a></nav>
+    </div>
+  </header>
+  <main id="view" class="wrap" aria-live="polite"></main>
+  <footer class="foot">Data tersimpan hanya di browser perangkat ini (tidak disinkronkan) dan dapat hilang jika data situs browser dihapus.</footer>
+  <noscript><div class="wrap"><div class="errbox">Aplikasi ini memerlukan JavaScript. Aktifkan JavaScript di browser Anda.</div></div></noscript>
+</div>
+
+<div id="printArea" aria-hidden="true"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Dialog serbaguna (input teks & konfirmasi) -->
+<dialog id="dlg">
+  <form method="dialog" class="dlg-in">
+    <h3 id="dlgTitle"></h3>
+    <div class="dlg-body" id="dlgBody"></div>
+    <div class="dlg-actions">
+      <button type="submit" value="cancel" class="btn btn-ghost" id="dlgCancel" formnovalidate>Batal</button>
+      <button type="submit" value="ok" class="btn btn-primary" id="dlgOk">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Dialog perbesar gambar -->
+<dialog id="zoomDlg">
+  <div class="dlg-in">
+    <img id="zoomImg" alt="Gambar diperbesar">
+    <div class="dlg-actions" style="margin-top:14px"><button type="button" class="btn btn-primary" data-act="zoom-close">Tutup</button></div>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+
+/* ==================== UTILITAS ==================== */
+const $ = (s, r = document) => r.querySelector(s);
+const view = $('#view');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const titik = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const rp = n => (n < 0 ? '-' : '') + 'Rp' + titik(Math.abs(Math.round(n)));   // Rp1.250.000
+const BLN = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const tgl = s => { if (!s) return '-'; const [y, m, d] = s.split('-'); return `${+d} ${BLN[m - 1]} ${y}`; };
+const jam = s => (s || '').replace(':', '.');
+const parseNum = s => parseInt(String(s).replace(/\D/g, ''), 10) || 0;
+const fmtInput = s => { const n = parseNum(s); return n ? titik(n) : ''; };
+const pad = n => String(n).padStart(2, '0');
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const nowStr = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
+let toastTimer;
+function toast(msg, type) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type || '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+const LOADING = '<div class="loading"><div class="spin"></div>Memuat data…</div>';
+const errorBox = m => `<div class="errbox"><b>Terjadi masalah.</b><br>${esc(m)}<p><a href="#/">Kembali ke Home</a></p></div>`;
+
+// URL sementara untuk menampilkan gambar (Blob) di layar
+let urls = [];
+const bu = b => { if (!b) return ''; const u = URL.createObjectURL(b); urls.push(u); return u; };
+const freeUrls = () => { urls.forEach(u => URL.revokeObjectURL(u)); urls = []; };
+
+/* ==================== INDEXEDDB ==================== */
+// Toko data: meta (pengaturan), kegiatan, transaksi (indeks: kegiatanId)
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    if (!window.indexedDB) return rej(new Error('IndexedDB tidak didukung.'));
+    const r = indexedDB.open('kas-mudah-db', 1);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      d.createObjectStore('meta', { keyPath: 'key' });
+      d.createObjectStore('kegiatan', { keyPath: 'id', autoIncrement: true });
+      d.createObjectStore('transaksi', { keyPath: 'id', autoIncrement: true })
+        .createIndex('kegiatanId', 'kegiatanId');
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error('Database sedang dipakai tab lain.'));
+  });
+}
+const rq = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+const store = (n, m) => db.transaction(n, m || 'readonly').objectStore(n);
+
+const allKegiatan = () => rq(store('kegiatan').getAll());
+const allTx = () => rq(store('transaksi').getAll());
+const txOf = id => rq(store('transaksi').index('kegiatanId').getAll(id));
+const getK = id => rq(store('kegiatan').get(id));
+const getMeta = async k => { const r = await rq(store('meta').get(k)); return r ? r.value : null; };
+const setMeta = (k, v) => rq(store('meta', 'readwrite').put({ key: k, value: v }));
+// Setiap perubahan data mencatat waktunya (dipakai untuk peringatan "ada perubahan setelah backup")
+const touch = () => setMeta('lastChange', Date.now());
+const addK = async k => { const r = await rq(store('kegiatan', 'readwrite').add(k)); await touch(); return r; };
+const putK = async k => { const r = await rq(store('kegiatan', 'readwrite').put(k)); await touch(); return r; };
+const putTx = async t => { const r = await rq(store('transaksi', 'readwrite').put(t)); await touch(); return r; };
+const delTx = async id => { const r = await rq(store('transaksi', 'readwrite').delete(id)); await touch(); return r; };
+
+// Lima kegiatan default hanya dibuat SEKALI (penanda 'seeded' di toko meta)
+function seed() {
+  return new Promise((res, rej) => {
+    const t = db.transaction(['meta', 'kegiatan'], 'readwrite');
+    const meta = t.objectStore('meta');
+    const g = meta.get('seeded');
+    g.onsuccess = () => {
+      if (!g.result) {
+        for (let i = 1; i <= 5; i++) t.objectStore('kegiatan').add({ nama: 'Kegiatan ' + i, target: 0, dibuat: Date.now() });
+        meta.put({ key: 'seeded', value: true });
+      }
+    };
+    t.oncomplete = () => res();
+    t.onerror = t.onabort = () => rej(t.error);
+  });
+}
+
+// Hapus kegiatan beserta seluruh transaksinya
+function deleteKegiatan(id) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(['kegiatan', 'transaksi'], 'readwrite');
+    const ts = t.objectStore('transaksi');
+    const r = ts.index('kegiatanId').getAllKeys(id);
+    r.onsuccess = () => {
+      r.result.forEach(k => ts.delete(k));
+      t.objectStore('kegiatan').delete(id);
+    };
+    t.oncomplete = () => touch().then(res, rej);
+    t.onerror = t.onabort = () => rej(t.error);
+  });
+}
+
+/* ==================== PEMBUKUAN ==================== */
+// Urutkan lama -> baru, lalu hitung saldo berjalan: saldo = saldo sebelumnya + debit - kredit
+function compute(list) {
+  const rows = list.slice().sort((a, b) =>
+    (a.tanggal + ' ' + a.jam).localeCompare(b.tanggal + ' ' + b.jam) || a.id - b.id);
+  let saldo = 0, masuk = 0, keluar = 0;
+  rows.forEach(t => {
+    if (t.jenis === 'debit') { saldo += t.nominal; masuk += t.nominal; }
+    else { saldo -= t.nominal; keluar += t.nominal; }
+    t.saldo = saldo;
+  });
+  return { rows, masuk, keluar, saldo };
+}
+const selisihText = (target, saldo) => {
+  const s = target - saldo;
+  return s < 0 ? 'Kelebihan ' + rp(-s) : rp(s);
+};
+
+/* ==================== GAMBAR ==================== */
+// Perkecil (maks. 1280px) dan kompres ke JPEG sebelum disimpan
+function compressImage(file, max = 1280, q = 0.75) {
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * s));
+      const h = Math.max(1, Math.round(img.naturalHeight * s));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const x = c.getContext('2d');
+      x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+      x.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(u);
+      c.toBlob(b => b ? res(b) : rej(new Error('Gagal memproses gambar.')), 'image/jpeg', q);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('File "' + file.name + '" tidak bisa dibaca sebagai gambar. Gunakan format JPG atau PNG.')); };
+    img.src = u;
+  });
+}
+
+/* ==================== DIALOG ==================== */
+const dlg = $('#dlg');
+function openDlg({ title, html, ok = 'OK', cancel = 'Batal', danger = false }) {
+  return new Promise(res => {
+    $('#dlgTitle').textContent = title;
+    $('#dlgBody').innerHTML = html;
+    const okb = $('#dlgOk'), cb = $('#dlgCancel');
+    okb.textContent = ok;
+    okb.className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary');
+    cb.textContent = cancel;
+    dlg.returnValue = '';
+    const onClose = () => { dlg.removeEventListener('close', onClose); res(dlg.returnValue === 'ok'); };
+    dlg.addEventListener('close', onClose);
+    dlg.showModal();
+    const inp = $('#dlgInput'); if (inp) { inp.focus(); inp.select(); }
+  });
+}
+async function askText(title, label, value, ok) {
+  const yes = await openDlg({
+    title, ok,
+    html: `<label for="dlgInput">${esc(label)}</label><input id="dlgInput" type="text" maxlength="60" required value="${esc(value)}" autocomplete="off">`
+  });
+  const v = $('#dlgInput').value.trim();
+  return yes && v ? v : null;
+}
+const askConfirm = (title, msg, ok) => openDlg({ title, html: `<p style="margin:0">${esc(msg)}</p>`, ok: ok || 'Hapus', danger: true });
+
+/* ==================== LOGO ==================== */
+// Semua logo adalah file lokal (path relatif). Jika file belum diunggah, gambar disembunyikan
+// dan (di galeri) muncul pesan nama file yang perlu diunggah.
+function logoMissing(im) {
+  if (!im || im.dataset.missing) return;
+  im.dataset.missing = '1';
+  im.hidden = true;
+  const box = im.closest('.gimg');
+  if (box) {
+    const p = document.createElement('div');
+    p.className = 'miss';
+    p.textContent = 'File "' + im.dataset.file + '" belum diunggah ke folder aplikasi.';
+    box.appendChild(p);
+  }
+}
+// Error gambar tidak "bubble", jadi didengarkan pada fase capture
+document.addEventListener('error', e => {
+  const im = e.target;
+  if (im && im.tagName === 'IMG' && im.dataset && im.dataset.file) logoMissing(im);
+}, true);
+// Logo header ada di HTML statis; gambar uji memastikan kegagalan muat tidak terlewat
+function watchHeaderLogo() {
+  const im = $('.brand-logo');
+  if (!im) return;
+  const probe = new Image();
+  probe.onerror = () => logoMissing(im);
+  probe.src = im.getAttribute('src');
+}
+
+/* ==================== HALAMAN PENGATURAN (GALERI LOGO) ==================== */
+const galleryItem = (file, judul, ket, utama) => `
+  <figure class="gitem${utama ? ' main' : ''}">
+    <div class="gimg"><img src="${file}" alt="${esc(judul + ': ' + ket)}" data-file="${file}"></div>
+    <figcaption><b>${esc(judul)}${utama ? ' · Logo utama' : ''}</b><span>${esc(ket)}</span></figcaption>
+  </figure>`;
+
+function showSettings() {
+  freeUrls();
+  view.innerHTML = `
+    <a class="btn btn-ghost back" href="#/">← Kembali ke Home</a>
+    <h1 class="dtitle">Pengaturan</h1>
+    <section class="card">
+      <h2>Galeri Konsep Logo</h2>
+      <p class="muted" style="margin:-6px 0 16px">Tiga konsep logo Kas Mudah. Logo yang dipakai di header aplikasi adalah konsep 3 (struk tersenyum dengan daun).</p>
+      <div class="gallery">
+        ${galleryItem('logo-dompet.png', 'Konsep 1', 'Dompet tersenyum', false)}
+        ${galleryItem('logo-koin.png', 'Konsep 2', 'Koin tersenyum', false)}
+        ${galleryItem('logo.svg', 'Konsep 3', 'Struk tersenyum dengan daun', true)}
+      </div>
+    </section>`;
+}
+
+/* ==================== BACKUP & PEMULIHAN ==================== */
+// Satu file JSON berisi kegiatan, pengaturan, transaksi, dan foto (Base64). Tanpa library, tanpa internet.
+const BACKUP_APP = 'kas-mudah', BACKUP_FORMAT = 1;
+let bkNote = null;   // pesan yang ditampilkan setelah Home dirender ulang
+
+const fmtWaktu = ms => {
+  const d = new Date(ms);
+  return `${tgl(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)}, ${pad(d.getHours())}.${pad(d.getMinutes())}`;
+};
+
+// Status backup: kapan terakhir backup, dan apakah ada perubahan setelahnya
+async function getBkStatus() {
+  const [lb, lc, n] = await Promise.all([getMeta('lastBackup'), getMeta('lastChange'), rq(store('transaksi').count())]);
+  if (!lb) {
+    return (lc || n)
+      ? { cls: 'warn', text: 'Belum pernah backup, padahal sudah ada data. Disarankan buat backup sekarang.' }
+      : { cls: '', text: 'Belum pernah backup.' };
+  }
+  if (lc && lc > lb) {
+    return { cls: 'warn', text: `Backup terakhir: ${fmtWaktu(lb)}. Ada perubahan data setelah backup tersebut, buat backup baru agar data terbaru ikut tersimpan.` };
+  }
+  return { cls: 'ok', text: `Backup terakhir: ${fmtWaktu(lb)}. Belum ada perubahan setelah backup.` };
+}
+async function refreshBkStatus() {
+  const el = $('#bkStatus'); if (!el) return;
+  const st = await getBkStatus();
+  el.className = 'bk-status ' + st.cls;
+  el.textContent = st.text;
+}
+function setBkMsg(type, text) {
+  const el = $('#bkMsg'); if (!el) return;
+  el.className = 'bk-msg ' + (type || '');
+  el.textContent = text || '';
+  el.hidden = !text;
+}
+
+const blobToB64 = b => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res({ type: b.type || 'image/jpeg', data: String(r.result).split(',')[1] || '' });
+  r.onerror = () => rej(new Error('Gagal membaca gambar untuk backup.'));
+  r.readAsDataURL(b);
+});
+function b64ToBlob(b64, type) {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type });
+}
+
+async function buildBackup() {
+  const [ks, ts, noticeOk] = await Promise.all([allKegiatan(), allTx(), getMeta('noticeOk')]);
+  const transaksi = [];
+  for (const t of ts) {
+    transaksi.push({
+      id: t.id, kegiatanId: t.kegiatanId, tanggal: t.tanggal, jam: t.jam, item: t.item,
+      jenis: t.jenis, nominal: t.nominal, keterangan: t.keterangan || '', dibuat: t.dibuat || 0,
+      struk: t.struk ? await blobToB64(t.struk) : null,
+      barang: t.barang ? await blobToB64(t.barang) : null
+    });
+  }
+  return {
+    app: BACKUP_APP, format: BACKUP_FORMAT, dibuat: new Date().toISOString(),
+    pengaturan: { noticeOk: !!noticeOk },
+    kegiatan: ks.map(k => ({ id: k.id, nama: k.nama, target: k.target || 0, dibuat: k.dibuat || 0 })),
+    transaksi
+  };
+}
+
+function downloadText(name, text) {
+  const u = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = u; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 15000);
+}
+
+async function doBackup() {
+  const data = await buildBackup();
+  const d = new Date();
+  const name = `kas-mudah-backup-${todayStr()}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+  downloadText(name, JSON.stringify(data));
+  await setMeta('lastBackup', Date.now());
+  const foto = data.transaksi.reduce((n, t) => n + (t.struk ? 1 : 0) + (t.barang ? 1 : 0), 0);
+  setBkMsg('ok', `Backup dibuat: ${name} (${data.kegiatan.length} kegiatan, ${data.transaksi.length} transaksi, ${foto} foto). Cek folder Unduhan/Downloads browser Anda dan simpan file ini di tempat aman.`);
+  await refreshBkStatus();
+  toast('Backup berhasil dibuat.');
+}
+
+// Validasi LENGKAP sebelum menyentuh database. Melempar Error bila ada yang salah.
+function validateBackup(text) {
+  let d;
+  try { d = JSON.parse(text); } catch (e) { throw new Error('Isi file tidak dapat dibaca sebagai JSON.'); }
+  if (!d || typeof d !== 'object' || d.app !== BACKUP_APP) throw new Error('File ini bukan backup Kas Mudah.');
+  if (d.format !== BACKUP_FORMAT) throw new Error('Versi format backup tidak dikenali.');
+  if (!Array.isArray(d.kegiatan) || !Array.isArray(d.transaksi)) throw new Error('Struktur backup tidak lengkap (daftar kegiatan/transaksi hilang).');
+
+  const isId = n => Number.isInteger(n) && n > 0;
+  const okDate = s => {
+    const m = typeof s === 'string' && /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) return false;
+    const dt = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+    return dt.getUTCFullYear() === +m[1] && dt.getUTCMonth() === +m[2] - 1 && dt.getUTCDate() === +m[3];
+  };
+  const okTime = s => typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+
+  const kIds = new Set(), kegiatan = [];
+  d.kegiatan.forEach((k, i) => {
+    const no = 'Kegiatan #' + (i + 1);
+    if (!k || !isId(k.id)) throw new Error(no + ': ID tidak valid.');
+    if (kIds.has(k.id)) throw new Error(no + ': ID kegiatan ganda.');
+    if (typeof k.nama !== 'string' || !k.nama.trim()) throw new Error(no + ': nama kosong.');
+    if (!Number.isInteger(k.target) || k.target < 0) throw new Error(no + ': target dana tidak valid.');
+    kIds.add(k.id);
+    kegiatan.push({ id: k.id, nama: k.nama.trim(), target: k.target, dibuat: Number.isFinite(k.dibuat) ? k.dibuat : Date.now() });
+  });
+
+  let foto = 0;
+  const foto1 = (v, label) => {
+    if (v == null) return null;
+    if (typeof v !== 'object' || typeof v.type !== 'string' || typeof v.data !== 'string' ||
+        !/^image\/(jpeg|png|webp|gif)$/.test(v.type)) throw new Error(label + ': data gambar tidak valid.');
+    if (!v.data || v.data.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(v.data)) throw new Error(label + ': gambar rusak (Base64 tidak valid).');
+    let blob;
+    try { blob = b64ToBlob(v.data, v.type); } catch (e) { throw new Error(label + ': gambar rusak.'); }
+    if (!blob.size) throw new Error(label + ': gambar kosong.');
+    foto++;
+    return blob;
+  };
+
+  const tIds = new Set(), transaksi = [];
+  d.transaksi.forEach((t, i) => {
+    const no = 'Transaksi #' + (i + 1);
+    if (!t || !isId(t.id)) throw new Error(no + ': ID tidak valid.');
+    if (tIds.has(t.id)) throw new Error(no + ': ID transaksi ganda.');
+    if (!kIds.has(t.kegiatanId)) throw new Error(no + ': merujuk kegiatan yang tidak ada di backup.');
+    if (!okDate(t.tanggal)) throw new Error(no + ': tanggal tidak valid.');
+    if (!okTime(t.jam)) throw new Error(no + ': jam tidak valid.');
+    if (typeof t.item !== 'string' || !t.item.trim()) throw new Error(no + ': nama item kosong.');
+    if (t.jenis !== 'debit' && t.jenis !== 'kredit') throw new Error(no + ': jenis transaksi tidak valid.');
+    if (!Number.isSafeInteger(t.nominal) || t.nominal <= 0) throw new Error(no + ': nominal harus lebih dari nol.');
+    if (t.keterangan != null && typeof t.keterangan !== 'string') throw new Error(no + ': keterangan tidak valid.');
+    tIds.add(t.id);
+    transaksi.push({
+      id: t.id, kegiatanId: t.kegiatanId, tanggal: t.tanggal, jam: t.jam, item: t.item.trim(),
+      jenis: t.jenis, nominal: t.nominal, keterangan: t.keterangan || '',
+      dibuat: Number.isFinite(t.dibuat) ? t.dibuat : 0,
+      struk: foto1(t.struk, no + ' (struk)'),
+      barang: foto1(t.barang, no + ' (foto barang)')
+    });
+  });
+
+  const waktu = typeof d.dibuat === 'string' && !isNaN(Date.parse(d.dibuat)) ? Date.parse(d.dibuat) : null;
+  return { kegiatan, transaksi, foto, waktu, noticeOk: !!(d.pengaturan && d.pengaturan.noticeOk) };
+}
+
+// Ganti seluruh data dalam SATU transaksi IndexedDB: jika gagal, semua dibatalkan dan data lama utuh.
+// ID asli dipertahankan, sehingga foto tetap terhubung ke transaksi yang sama.
+function applyBackup(p) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(['meta', 'kegiatan', 'transaksi'], 'readwrite');
+    t.oncomplete = () => res();
+    t.onerror = t.onabort = () => rej(t.error || new Error('Penulisan data dibatalkan.'));
+    try {
+      const ks = t.objectStore('kegiatan'), ts = t.objectStore('transaksi'), meta = t.objectStore('meta');
+      ks.clear(); ts.clear();
+      p.kegiatan.forEach(k => ks.put(k));
+      p.transaksi.forEach(x => ts.put(x));
+      const now = Date.now();
+      meta.put({ key: 'seeded', value: true });      // agar 5 kegiatan default tidak dibuat lagi
+      meta.put({ key: 'noticeOk', value: p.noticeOk });
+      meta.put({ key: 'lastBackup', value: now });
+      meta.put({ key: 'lastChange', value: now });
+    } catch (ex) {
+      // Kesalahan di tengah jalan: batalkan SELURUH transaksi agar data lama tidak ikut terhapus
+      try { t.abort(); } catch (_) {}
+      rej(ex);
+    }
+  });
+}
+
+async function doRestore(file) {
+  if (!file) return;
+  setBkMsg('', '');
+  let p;
+  try {
+    if (!file.size) throw new Error('File kosong.');
+    p = validateBackup(await file.text());
+  } catch (ex) {
+    setBkMsg('err', 'Pemulihan dibatalkan. ' + ex.message + ' Data Anda saat ini tidak diubah.');
+    return;
+  }
+  const [nk, nt] = [(await allKegiatan()).length, (await allTx()).length];
+  const ok = await openDlg({
+    title: 'Ganti Seluruh Data?',
+    ok: 'Ganti Semua Data', danger: true,
+    html: `<p style="margin:0 0 8px">Backup ini ${p.waktu ? 'dibuat ' + fmtWaktu(p.waktu) + ' dan ' : ''}berisi <b>${p.kegiatan.length} kegiatan</b>, <b>${p.transaksi.length} transaksi</b>, dan <b>${p.foto} foto</b>.</p>
+      <p style="margin:0 0 8px">Seluruh data saat ini (${nk} kegiatan, ${nt} transaksi) akan <b>dihapus dan diganti</b> dengan isi backup. Tindakan ini tidak bisa dibatalkan.</p>
+      <p style="margin:0">Disarankan menekan Batal lalu membuat backup data saat ini terlebih dahulu.</p>`
+  });
+  if (!ok) { setBkMsg('', 'Pemulihan dibatalkan. Data tidak diubah.'); return; }
+  try {
+    await applyBackup(p);
+  } catch (ex) {
+    console.error(ex);
+    setBkMsg('err', 'Pemulihan gagal: ' + (ex.message || ex) + ' Data lama tetap utuh.');
+    return;
+  }
+  bkNote = { type: 'ok', text: `Pemulihan berhasil: ${p.kegiatan.length} kegiatan, ${p.transaksi.length} transaksi, dan ${p.foto} foto dipulihkan.` };
+  await showHome();
+  toast('Data berhasil dipulihkan.');
+}
+
+/* ==================== HOME ==================== */
+let homeData = [];
+
+async function showHome() {
+  view.innerHTML = LOADING;
+  freeUrls();
+  const [ks, ts] = await Promise.all([allKegiatan(), allTx()]);
+  const noticeOk = await getMeta('noticeOk');
+  const st = await getBkStatus();
+  const note = bkNote; bkNote = null;
+  homeData = ks.map(k => {
+    const l = ts.filter(t => t.kegiatanId === k.id);
+    return Object.assign({ k, n: l.length }, compute(l));
+  });
+
+  const cards = homeData.map(d => `
+    <article class="card kcard">
+      <div class="kc-head"><h3>${esc(d.k.nama)}</h3><span class="chip">${d.n} transaksi</span></div>
+      <dl class="kc-stats">
+        <div><dt>Target dana</dt><dd>${rp(d.k.target)}</dd></div>
+        <div class="in"><dt>Total pemasukan</dt><dd>${rp(d.masuk)}</dd></div>
+        <div class="out"><dt>Total pengeluaran</dt><dd>${rp(d.keluar)}</dd></div>
+        <div class="bal"><dt>Saldo terakhir</dt><dd>${rp(d.saldo)}</dd></div>
+      </dl>
+      <div class="kc-actions">
+        <a class="btn btn-primary" href="#/k/${d.k.id}">Buka Kegiatan</a>
+        <button class="btn btn-teal" data-act="export-one" data-id="${d.k.id}">Ekspor PDF</button>
+        <button class="btn btn-ghost" data-act="rename" data-id="${d.k.id}">Rename</button>
+        <button class="btn btn-danger-ghost" data-act="del" data-id="${d.k.id}">Hapus</button>
+      </div>
+    </article>`).join('');
+
+  view.innerHTML = `
+    <section class="hero">
+      <h1>Selamat Datang di Kas Mudah</h1>
+      <p>Kelola pemasukan, pengeluaran, bukti transaksi, dan saldo setiap kegiatan dalam satu tempat.</p>
+      <div class="row">
+        <button class="btn btn-teal" data-act="add-k">+ Tambah Kegiatan</button>
+        <button class="btn btn-ghost" data-act="export-all">Ekspor Semua Kegiatan</button>
+      </div>
+    </section>
+    ${noticeOk ? '' : `<div class="notice" role="note">
+      <p><b>Info penyimpanan:</b> data dan gambar hanya tersimpan di browser perangkat ini. Data tidak disinkronkan ke perangkat lain dan dapat hilang jika data situs browser dihapus. Ekspor PDF secara berkala sebagai cadangan.</p>
+      <button class="btn btn-ghost btn-sm" data-act="notice-ok">Mengerti</button></div>`}
+    <section class="card bk" aria-labelledby="bkTitle">
+      <h2 id="bkTitle">Backup &amp; Pemulihan</h2>
+      <p class="muted">Simpan seluruh kegiatan, transaksi, serta foto struk dan barang ke satu file, atau pulihkan dari file backup. Semuanya berjalan offline di perangkat ini.</p>
+      <p class="bk-status ${st.cls}" id="bkStatus">${esc(st.text)}</p>
+      <p class="bk-msg ${note ? note.type : ''}" id="bkMsg" role="alert" ${note ? '' : 'hidden'}>${note ? esc(note.text) : ''}</p>
+      <div class="row">
+        <button class="btn btn-primary" data-act="backup">Backup Sekarang</button>
+        <button class="btn btn-ghost" data-act="restore-pick">Pulihkan dari File Backup</button>
+        <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+      </div>
+    </section>
+    ${homeData.length ? `<div class="cards">${cards}</div>` :
+      `<div class="card empty"><p>Belum ada kegiatan. Tekan <b>Tambah Kegiatan</b> untuk memulai.</p></div>`}`;
+}
+
+/* ==================== DETAIL KEGIATAN ==================== */
+let cur = null;      // kegiatan yang sedang dibuka
+let curRows = [];    // transaksi (sudah terurut + saldo)
+let editing = null;  // transaksi yang sedang diedit
+
+async function showDetail(id) {
+  view.innerHTML = LOADING;
+  const k = await getK(id);
+  if (!k) { view.innerHTML = errorBox('Kegiatan tidak ditemukan. Mungkin sudah dihapus.'); return; }
+  cur = k; editing = null;
+
+  view.innerHTML = `
+    <a class="btn btn-ghost back" href="#/">← Kembali ke Home</a>
+    <h1 class="dtitle" id="dTitle">${esc(k.nama)}</h1>
+
+    <section class="card">
+      <h2>Pengaturan Kegiatan</h2>
+      <form id="setForm" novalidate>
+        <div class="grid2">
+          <div class="f"><label for="s-nama">Nama kegiatan</label><input id="s-nama" name="nama" type="text" maxlength="60" value="${esc(k.nama)}"></div>
+          <div class="f"><label for="s-target">Target dana</label><div class="money"><span>Rp</span><input id="s-target" name="target" inputmode="numeric" autocomplete="off" value="${fmtInput(k.target)}" placeholder="0"></div></div>
+        </div>
+        <p class="err" id="setErr" role="alert"></p>
+        <div class="row">
+          <button class="btn btn-primary" type="submit">Simpan Pengaturan</button>
+          <button class="btn btn-teal" type="button" data-act="export-cur">Ekspor PDF</button>
+        </div>
+      </form>
+    </section>
+
+    <div class="scores" id="score"></div>
+
+    <section class="card">
+      <h2 id="formTitle">Tambah Transaksi</h2>
+      <div class="editing-banner" id="editBanner" hidden>Sedang mengedit transaksi. Gambar lama tetap tersimpan kecuali Anda memilih gambar baru.</div>
+      <form id="txForm" novalidate>
+        <div class="grid2">
+          <div class="f"><label for="f-tgl">Tanggal</label><input id="f-tgl" name="tanggal" type="date"></div>
+          <div class="f"><label for="f-jam">Jam</label><input id="f-jam" name="jam" type="time"></div>
+          <div class="f span2"><label for="f-item">Nama item atau barang</label><input id="f-item" name="item" type="text" maxlength="120" placeholder="Contoh: Konsumsi rapat"></div>
+          <div class="f"><label for="f-jenis">Jenis transaksi</label>
+            <select id="f-jenis" name="jenis"><option value="">Pilih jenis transaksi…</option><option value="debit">Pemasukan (Debit)</option><option value="kredit">Pengeluaran (Kredit)</option></select></div>
+          <div class="f"><label for="f-nom">Nominal uang</label><div class="money"><span>Rp</span><input id="f-nom" name="nominal" inputmode="numeric" autocomplete="off" placeholder="0"></div></div>
+          <div class="f"><label for="f-struk">Upload struk / bukti transaksi</label><input id="f-struk" name="struk" type="file" accept="image/*"><small id="h-struk"></small></div>
+          <div class="f"><label for="f-barang">Upload foto barang</label><input id="f-barang" name="barang" type="file" accept="image/*"><small id="h-barang"></small></div>
+          <div class="f span2"><label for="f-ket">Keterangan tambahan</label><textarea id="f-ket" name="keterangan" rows="2" maxlength="300" placeholder="Opsional"></textarea></div>
+        </div>
+        <p class="err" id="formErr" role="alert"></p>
+        <div class="row">
+          <button class="btn btn-primary" type="submit" id="btnSave">Simpan Transaksi</button>
+          <button class="btn btn-ghost" type="reset">Reset Form</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Daftar Transaksi</h2>
+      <div class="tw" id="tbl"></div>
+    </section>`;
+
+  $('#setForm').addEventListener('submit', saveSettings);
+  $('#txForm').addEventListener('submit', saveTx);
+  $('#txForm').addEventListener('reset', () => { editing = null; setTimeout(() => { setDefaults(); updateEditUI(); }, 0); });
+  [$('#s-target'), $('#f-nom')].forEach(i => i.addEventListener('input', () => { i.value = fmtInput(i.value); }));
+  setDefaults();
+  await refreshDetail();
+}
+
+function setDefaults() {
+  const f = $('#txForm'); if (!f) return;
+  if (!f.tanggal.value) f.tanggal.value = todayStr();
+  if (!f.jam.value) f.jam.value = nowStr();
+}
+
+function updateEditUI() {
+  $('#formTitle').textContent = editing ? 'Edit Transaksi' : 'Tambah Transaksi';
+  $('#editBanner').hidden = !editing;
+  $('#btnSave').textContent = editing ? 'Simpan Perubahan' : 'Simpan Transaksi';
+  $('#h-struk').textContent = editing && editing.struk ? 'Gambar tersimpan. Pilih file baru hanya jika ingin menggantinya.' : '';
+  $('#h-barang').textContent = editing && editing.barang ? 'Gambar tersimpan. Pilih file baru hanya jika ingin menggantinya.' : '';
+  $('#formErr').textContent = '';
+}
+
+// Perbarui scoreboard + tabel (dipanggil setelah setiap perubahan data)
+async function refreshDetail() {
+  const list = await txOf(cur.id);
+  const c = compute(list);
+  curRows = c.rows;
+  const sel = cur.target - c.saldo;
+  $('#score').innerHTML = `
+    <div class="score s1"><span>Target Dana Keseluruhan</span><strong>${rp(cur.target)}</strong><small>Atur di bagian Pengaturan Kegiatan</small></div>
+    <div class="score s2"><span>Selisih Target dan Saldo</span><strong>${rp(Math.abs(sel))}</strong><small>${sel < 0 ? 'Kelebihan dari target' : sel === 0 ? 'Target tercapai' : 'Masih kurang dari target'}</small></div>
+    <div class="score s3"><span>Total Saldo</span><strong>${rp(c.saldo)}</strong><small>Debit (masuk) − Kredit (keluar)</small></div>`;
+
+  freeUrls();
+  const thumb = (b, alt) => {
+    if (!b) return '<span class="muted">-</span>';
+    const u = bu(b);
+    return `<button type="button" class="thumb" data-act="zoom" data-src="${u}" aria-label="Perbesar foto ${alt}"><img src="${u}" alt="Foto ${alt}"></button>`;
+  };
+  const body = c.rows.length ? c.rows.map((t, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><div>${tgl(t.tanggal)}</div><small class="muted">${jam(t.jam)}</small></td>
+      <td>${esc(t.item)}</td>
+      <td class="num in">${t.jenis === 'debit' ? rp(t.nominal) : '-'}</td>
+      <td class="num out">${t.jenis === 'kredit' ? rp(t.nominal) : '-'}</td>
+      <td class="num"><b>${rp(t.saldo)}</b></td>
+      <td>${thumb(t.struk, 'struk')}</td>
+      <td>${thumb(t.barang, 'barang')}</td>
+      <td>${esc(t.keterangan) || '-'}</td>
+      <td class="act">
+        <button class="btn btn-sm btn-ghost" data-act="tx-edit" data-id="${t.id}">Edit</button>
+        <button class="btn btn-sm btn-danger-ghost" data-act="tx-del" data-id="${t.id}">Hapus</button>
+      </td>
+    </tr>`).join('') :
+    '<tr><td colspan="10" class="empty">Belum ada transaksi. Isi formulir di atas lalu tekan <b>Simpan Transaksi</b>.</td></tr>';
+
+  $('#tbl').innerHTML = `<table class="tx"><thead><tr>
+    <th>Nomor</th><th>Tanggal</th><th>Items</th><th class="num">Debit</th><th class="num">Kredit</th><th class="num">Saldo</th>
+    <th>Upload Struk</th><th>Upload Barang</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody>${body}</tbody></table>`;
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+  const f = e.target, err = $('#setErr');
+  const nama = f.nama.value.trim();
+  if (!nama) { err.textContent = 'Nama kegiatan tidak boleh kosong.'; return; }
+  err.textContent = '';
+  cur = Object.assign({}, cur, { nama, target: parseNum(f.target.value) });
+  await putK(cur);
+  $('#dTitle').textContent = cur.nama;
+  f.target.value = fmtInput(cur.target);
+  await refreshDetail();
+  toast('Pengaturan kegiatan disimpan.');
+}
+
+async function saveTx(e) {
+  e.preventDefault();
+  const f = e.target, err = $('#formErr'), btn = $('#btnSave');
+  const fail = m => { err.textContent = m; };
+  const nominal = parseNum(f.nominal.value);
+  if (!f.tanggal.value) return fail('Tanggal wajib diisi.');
+  if (!f.jam.value) return fail('Jam wajib diisi.');
+  if (!f.item.value.trim()) return fail('Nama item atau barang wajib diisi.');
+  if (!f.jenis.value) return fail('Pilih jenis transaksi: Pemasukan (Debit) atau Pengeluaran (Kredit).');
+  if (nominal <= 0) return fail('Nominal harus lebih dari nol.');
+  err.textContent = '';
+
+  const wasEdit = !!editing;
+  btn.disabled = true; btn.textContent = 'Menyimpan…';
+  try {
+    const sf = f.struk.files[0], bf = f.barang.files[0];
+    const struk = sf ? await compressImage(sf) : (editing ? editing.struk : null);
+    const barang = bf ? await compressImage(bf) : (editing ? editing.barang : null);
+    const rec = {
+      kegiatanId: cur.id,
+      tanggal: f.tanggal.value, jam: f.jam.value,
+      item: f.item.value.trim(), jenis: f.jenis.value, nominal,
+      keterangan: f.keterangan.value.trim(),
+      struk: struk || null, barang: barang || null,
+      dibuat: editing ? editing.dibuat : Date.now()
+    };
+    if (editing) rec.id = editing.id;
+    await putTx(rec);
+    editing = null;
+    f.reset();
+    await refreshDetail();
+    toast(wasEdit ? 'Transaksi berhasil diperbarui.' : 'Transaksi berhasil disimpan.');
+  } catch (ex) {
+    console.error(ex);
+    fail(ex.message || 'Gagal menyimpan. Coba lagi.');
+  } finally {
+    btn.disabled = false; updateEditUI();
+  }
+}
+
+function startEdit(id) {
+  const t = curRows.find(x => x.id === id); if (!t) return;
+  editing = t;
+  const f = $('#txForm');
+  f.tanggal.value = t.tanggal; f.jam.value = t.jam; f.item.value = t.item;
+  f.jenis.value = t.jenis; f.nominal.value = fmtInput(t.nominal); f.keterangan.value = t.keterangan || '';
+  f.struk.value = ''; f.barang.value = '';
+  updateEditUI();
+  $('#formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  f.item.focus({ preventScroll: true });
+}
+
+/* ==================== LAPORAN PDF (window.print) ==================== */
+let printUrls = [];
+const pu = b => { if (!b) return ''; const u = URL.createObjectURL(b); printUrls.push(u); return u; };
+const clearPrint = () => { $('#printArea').innerHTML = ''; printUrls.forEach(u => URL.revokeObjectURL(u)); printUrls = []; };
+
+function periode(rows) {
+  if (!rows.length) return 'Belum ada transaksi';
+  const a = rows[0].tanggal, b = rows[rows.length - 1].tanggal;
+  return a === b ? tgl(a) : tgl(a) + ' – ' + tgl(b);
+}
+
+function reportSection(k, list, withBreak) {
+  const c = compute(list);
+  const img = b => b ? `<img class="pt" src="${pu(b)}" alt="">` : '-';
+  const rows = c.rows.length ? c.rows.map((t, i) => `<tr>
+      <td>${i + 1}</td><td>${tgl(t.tanggal)}<br>${jam(t.jam)}</td><td>${esc(t.item)}</td>
+      <td class="n">${t.jenis === 'debit' ? rp(t.nominal) : '-'}</td>
+      <td class="n">${t.jenis === 'kredit' ? rp(t.nominal) : '-'}</td>
+      <td class="n"><b>${rp(t.saldo)}</b></td>
+      <td>${img(t.struk)}</td><td>${img(t.barang)}</td><td>${esc(t.keterangan) || '-'}</td></tr>`).join('') : '';
+  return `<section class="${withBreak ? 'brk' : ''}">
+    <h2>${esc(k.nama)}</h2>
+    <p class="per">Periode transaksi: ${periode(c.rows)}</p>
+    <table><tbody>
+      <tr><th>Target dana</th><td>${rp(k.target)}</td><th>Total pemasukan</th><td>${rp(c.masuk)}</td></tr>
+      <tr><th>Total pengeluaran</th><td>${rp(c.keluar)}</td><th>Saldo akhir</th><td>${rp(c.saldo)}</td></tr>
+      <tr><th>Selisih target dan saldo</th><td colspan="3">${selisihText(k.target, c.saldo)}</td></tr>
+    </tbody></table>
+    ${c.rows.length ? `<table class="rtx"><thead><tr>
+      <th>No</th><th>Tanggal</th><th>Items</th><th>Debit</th><th>Kredit</th><th>Saldo</th><th>Struk</th><th>Barang</th><th>Keterangan</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="tot"><td colspan="3">Total</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.keluar)}</td><td class="n">${rp(c.saldo)}</td><td colspan="3"></td></tr></tfoot></table>`
+      : '<div class="none">Belum ada transaksi pada kegiatan ini.</div>'}
+  </section>`;
+}
+
+async function exportReport(ids) {
+  const [ks, ts] = await Promise.all([allKegiatan(), allTx()]);
+  const sel = ids ? ks.filter(k => ids.includes(k.id)) : ks;
+  if (!sel.length) { toast('Belum ada kegiatan untuk diekspor.', 'err'); return; }
+  toast('Menyiapkan laporan…');
+  clearPrint();
+
+  const semua = !ids;
+  const d = new Date();
+  const dicetak = `${tgl(todayStr())}, ${jam(nowStr())}`;
+  let html = `<div class="rhead"><div><b>Kas Mudah</b><br>${semua ? 'Laporan Seluruh Kegiatan' : 'Laporan Kegiatan'}</div><span>Dicetak: ${dicetak}</span></div>`;
+
+  if (semua) {
+    let gm = 0, gk = 0, gs = 0, gt = 0;
+    const rows = sel.map(k => {
+      const c = compute(ts.filter(t => t.kegiatanId === k.id));
+      gm += c.masuk; gk += c.keluar; gs += c.saldo; gt += k.target;
+      return `<tr><td>${esc(k.nama)}</td><td class="n">${rp(k.target)}</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.keluar)}</td><td class="n"><b>${rp(c.saldo)}</b></td><td class="n">${selisihText(k.target, c.saldo)}</td></tr>`;
+    }).join('');
+    html += `<h2>Ringkasan Seluruh Kegiatan</h2><p class="per">${sel.length} kegiatan</p>
+      <table><thead><tr><th>Kegiatan</th><th>Target dana</th><th>Pemasukan</th><th>Pengeluaran</th><th>Saldo akhir</th><th>Selisih target</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr class="tot"><td>Total</td><td class="n">${rp(gt)}</td><td class="n">${rp(gm)}</td><td class="n">${rp(gk)}</td><td class="n">${rp(gs)}</td><td class="n">${selisihText(gt, gs)}</td></tr></tfoot></table>`;
+    html += sel.map(k => reportSection(k, ts.filter(t => t.kegiatanId === k.id), true)).join('');
+  } else {
+    html += sel.map(k => reportSection(k, ts.filter(t => t.kegiatanId === k.id), false)).join('');
+  }
+
+  const area = $('#printArea');
+  area.innerHTML = html;
+  // Tunggu semua gambar lokal siap sebelum dialog cetak dibuka
+  await Promise.all([...area.querySelectorAll('img')].map(im =>
+    im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
+
+  const oldTitle = document.title;
+  const namaFile = semua ? 'Laporan Semua Kegiatan' : 'Laporan ' + sel[0].nama;
+  document.title = `${namaFile} - ${todayStr()}`;
+  const after = () => { window.removeEventListener('afterprint', after); document.title = oldTitle; clearPrint(); };
+  window.addEventListener('afterprint', after);
+  setTimeout(() => window.print(), 150);
+}
+
+/* ==================== AKSI KLIK ==================== */
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const act = b.dataset.act, id = +b.dataset.id;
+  try {
+    switch (act) {
+      case 'add-k': {
+        const nama = await askText('Tambah Kegiatan', 'Nama kegiatan', '', 'Tambah');
+        if (!nama) return;
+        await addK({ nama, target: 0, dibuat: Date.now() });
+        await showHome(); toast('Kegiatan ditambahkan.');
+        break;
+      }
+      case 'rename': {
+        const k = await getK(id); if (!k) return;
+        const nama = await askText('Ubah Nama Kegiatan', 'Nama baru', k.nama, 'Simpan');
+        if (!nama) return;
+        k.nama = nama; await putK(k);
+        await showHome(); toast('Nama kegiatan diperbarui.');
+        break;
+      }
+      case 'del': {
+        const d = homeData.find(x => x.k.id === id); if (!d) return;
+        const ok = await askConfirm('Hapus Kegiatan?', `Kegiatan "${d.k.nama}" beserta ${d.n} transaksinya akan dihapus permanen dan tidak bisa dikembalikan.`);
+        if (!ok) return;
+        await deleteKegiatan(id);
+        await showHome(); toast('Kegiatan dihapus.');
+        break;
+      }
+      case 'notice-ok': await setMeta('noticeOk', true); b.closest('.notice').remove(); break;
+      case 'backup': {
+        b.disabled = true; b.textContent = 'Menyiapkan backup…';
+        try { await doBackup(); }
+        finally { b.disabled = false; b.textContent = 'Backup Sekarang'; }
+        break;
+      }
+      case 'restore-pick': $('#restoreFile').click(); break;
+      case 'export-one': await exportReport([id]); break;
+      case 'export-all': await exportReport(null); break;
+      case 'export-cur': await exportReport([cur.id]); break;
+      case 'tx-edit': startEdit(id); break;
+      case 'tx-del': {
+        const t = curRows.find(x => x.id === id); if (!t) return;
+        const ok = await askConfirm('Hapus Transaksi?', `Transaksi "${t.item}" (${rp(t.nominal)}) akan dihapus. Saldo akan dihitung ulang.`);
+        if (!ok) return;
+        await delTx(id);
+        if (editing && editing.id === id) $('#txForm').reset();
+        await refreshDetail(); toast('Transaksi dihapus.');
+        break;
+      }
+      case 'zoom': $('#zoomImg').src = b.dataset.src; $('#zoomDlg').showModal(); break;
+      case 'zoom-close': $('#zoomDlg').close(); break;
+    }
+  } catch (ex) {
+    console.error(ex);
+    toast('Terjadi kesalahan: ' + (ex.message || ex), 'err');
+  }
+});
+$('#zoomDlg').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+// File backup dipilih -> validasi -> konfirmasi -> pulihkan
+document.addEventListener('change', async e => {
+  if (e.target.id !== 'restoreFile') return;
+  const f = e.target.files[0];
+  e.target.value = '';           // agar file yang sama bisa dipilih lagi
+  try { await doRestore(f); }
+  catch (ex) { console.error(ex); setBkMsg('err', 'Terjadi kesalahan: ' + (ex.message || ex) + ' Data lama tidak diubah.'); }
+});
+
+/* ==================== ROUTING (hash, aman untuk subfolder GitHub Pages) ==================== */
+async function route() {
+  const hash = location.hash || '#/';
+  const m = hash.match(/^#\/k\/(\d+)/);
+  window.scrollTo(0, 0);
+  try {
+    if (hash.startsWith('#/pengaturan')) showSettings();
+    else if (m) await showDetail(+m[1]);
+    else await showHome();
+  } catch (ex) {
+    console.error(ex);
+    view.innerHTML = errorBox('Data tidak dapat dimuat: ' + (ex.message || ex));
+  }
+}
+
+/* ==================== MULAI ==================== */
+(async function init() {
+  view.innerHTML = LOADING;
+  watchHeaderLogo();
+  try {
+    db = await openDB();
+    db.onversionchange = () => db.close();
+    await seed();
+  } catch (ex) {
+    console.error(ex);
+    view.innerHTML = errorBox('Penyimpanan browser tidak dapat dibuka (' + (ex.message || ex) + '). Pastikan tidak memakai mode penyamaran/private dan penyimpanan situs tidak diblokir.');
+    return;
+  }
+  // Minta browser agar tidak menghapus data otomatis (bila didukung)
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  window.addEventListener('hashchange', route);
+  route();
+
+  // Service Worker: agar bisa dibuka offline (hanya jalan lewat https / localhost)
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Service Worker gagal:', err));
+  }
+})();
+</script>
+</body>
+</html>
