@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900" role="img" aria-labelledby="title desc">
+<title id="title">Kas Mudah</title>
+<desc id="desc">Logo struk tersenyum dengan daun hijau.</desc>
+<defs>
+  <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#8BCF45"/><stop offset="1" stop-color="#16834A"/>
+  </linearGradient>
+  <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F0F8EE"/>
+  </linearGradient>
+</defs>
+<!-- leaves behind the receipt -->
+<path d="M540 530 C570 380 685 315 755 325 C750 425 680 510 540 530Z" fill="#16834A"/>
+<path d="M515 565 C535 430 645 380 720 390 C705 485 625 550 515 565Z" fill="url(#leaf)"/>
+<path d="M555 515 C625 465 675 410 715 360" fill="none" stroke="#DDF3C6" stroke-width="9" stroke-linecap="round"/>
+<!-- receipt body -->
+<path d="M285 190 Q285 155 322 155 H575 Q610 155 610 190 V570 L575 596 L540 570 L505 596 L470 570 L435 596 L400 570 L365 596 L330 570 L295 596 Q270 600 270 570 V190 Q270 155 305 155" fill="url(#paper)" stroke="#08744A" stroke-width="20" stroke-linejoin="round"/>
+<path d="M545 157 H575 Q610 157 610 192 V225 Q570 218 545 190Z" fill="#CDE9B7"/>
+<!-- happy face -->
+<path d="M350 300 Q368 273 389 300" fill="none" stroke="#075D3F" stroke-width="17" stroke-linecap="round"/>
+<path d="M465 300 Q483 273 504 300" fill="none" stroke="#075D3F" stroke-width="17" stroke-linecap="round"/>
+<circle cx="350" cy="329" r="13" fill="#B9E09B"/><circle cx="504" cy="329" r="13" fill="#B9E09B"/>
+<path d="M380 330 Q427 385 474 330" fill="none" stroke="#075D3F" stroke-width="18" stroke-linecap="round"/>
+<!-- receipt lines -->
+<rect x="330" y="425" width="170" height="17" rx="8.5" fill="#A8C9A1"/>
+<rect x="330" y="466" width="125" height="17" rx="8.5" fill="#A8C9A1"/>
+<rect x="330" y="507" width="155" height="17" rx="8.5" fill="#A8C9A1"/>
+<!-- sparkle -->
+<path d="M220 250 L220 220 M205 235 H235" stroke="#7BBE3E" stroke-width="10" stroke-linecap="round"/>
+<!-- wordmark -->
+<text x="450" y="725" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="100" font-weight="800" letter-spacing="-4">
+<tspan fill="#075D3F">Kas </tspan><tspan fill="#63AD35">Mudah</tspan>
+</text>
+<path d="M725 650 C741 622 761 615 779 619 C774 642 755 654 725 650Z" fill="#16834A"/>
+<path d="M728 651 Q749 640 767 625" fill="none" stroke="#E6F5D8" stroke-width="4" stroke-linecap="round"/>
+</svg>
