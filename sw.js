@@ -1,14 +1,14 @@
 // Service Worker Kas Mudah
 // PENTING: ganti angka versi di bawah (v2 -> v3, dst.) setiap kali Anda mengubah file aplikasi
 // atau menambah/mengganti file logo, agar pengguna mendapat versi terbaru.
-const CACHE = 'kas-mudah-v2';
+const CACHE = 'kas-mudah-v3';
 
 // File inti: wajib ada. Jika salah satu gagal diunduh, instalasi dibatalkan.
-const CORE = ['./', './index.html', './manifest.json', './icon.svg'];
+const CORE = ['./', './index.html', './manifest.json', './assets/favicon.svg'];
 
 // File logo: opsional. Disimpan satu per satu; bila file belum diunggah, dilewati
 // (tidak menggagalkan instalasi sehingga aplikasi tetap bisa dipakai offline).
-const LOGOS = ['./logo.svg', './favicon.svg', './logo-dompet.png', './logo-koin.png'];
+const LOGOS = ['./assets/logo.svg', './assets/favicon.svg', './assets/logo-dompet.png', './assets/logo-koin.png'];
 
 // Simpan semua file aplikasi saat pertama kali dibuka (precache)
 self.addEventListener('install', (e) => {

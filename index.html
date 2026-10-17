@@ -7,7 +7,7 @@
 <meta name="description" content="Kas Mudah: catat pemasukan, pengeluaran, bukti transaksi, dan saldo setiap kegiatan. Offline dan tersimpan di perangkat.">
 <meta name="theme-color" content="#12284c">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 
 <style>
 /* ==================== GAYA DASAR ==================== */
@@ -59,6 +59,10 @@ input[type=file]{font:inherit;font-size:.9rem;width:100%;padding:8px;border:1.5p
 .money{display:flex;align-items:stretch}
 .money span{display:flex;align-items:center;padding:0 12px;background:var(--teal-l);color:var(--teal);font-weight:700;border:1.5px solid #c3cddd;border-right:0;border-radius:10px 0 0 10px}
 .money input{border-radius:0 10px 10px 0}
+.tx-types{display:flex;gap:8px}
+.tx-type{flex:1;border:2px solid #c3cddd;background:#fff;color:var(--navy);border-radius:10px;padding:12px 10px;font:inherit;font-weight:700;cursor:pointer}
+.tx-type.active[data-value="debit"]{background:#e9f7ef;border-color:#0a7d4a;color:#0a7d4a}
+.tx-type.active[data-value="kredit"]{background:#fdecea;border-color:#b42318;color:#b42318}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .span2{grid-column:1 / -1}
 .err{color:var(--red);font-weight:600;min-height:1.4em;margin:12px 0 4px}
@@ -164,8 +168,22 @@ dialog::backdrop{background:rgba(10,20,40,.55)}
   #printArea h2{font-size:16px;color:#12284c;margin:0 0 2px;break-after:avoid;page-break-after:avoid}
   #printArea .per{margin:0 0 8px;color:#333}
   #printArea .brk{break-before:page;page-break-before:always}
+  #printArea .cover-title{font-size:21px;color:#12284c;margin:10px 0 3px}
+  #printArea .cover-sub{font-size:12px;color:#333;margin:0 0 16px}
+  #printArea .scoregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+  #printArea .scorebox{border:1px solid #8794a8;border-radius:7px;padding:10px}
+  #printArea .scorebox b{display:block;font-size:10px;color:#444;margin-bottom:4px}
+  #printArea .scorebox strong{font-size:15px;color:#12284c}
+  #printArea .attachment-page{break-before:page;page-break-before:always}
+  #printArea .attachment-item{border:1px solid #8794a8;border-radius:8px;padding:10px;margin:0 0 12px;break-inside:avoid;page-break-inside:avoid}
+  #printArea .attachment-item h3{font-size:13px;color:#12284c;margin:0 0 6px}
+  #printArea .attachment-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #printArea .attachment-grid figure{margin:0}
+  #printArea .attachment-grid figcaption{font-weight:bold;margin-bottom:4px}
+  #printArea img.evidence{width:100%;height:190px;object-fit:contain;border:1px solid #bbb;background:#fafafa;display:block}
+  #printArea .no-evidence{height:70px;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center;color:#666}
   #printArea table{width:100%;border-collapse:collapse;margin-bottom:12px}
-  #printArea th,#printArea td{border:1px solid #8794a8;padding:4px 5px;text-align:left;vertical-align:top;font-size:10px;word-break:break-word}
+  #printArea th,#printArea td{border:1px solid #8794a8;padding:2px 3px;text-align:left;vertical-align:top;font-size:8px;word-break:break-word}
   #printArea th{background:#e8eef7;color:#12284c}
   #printArea thead{display:table-header-group}
   #printArea tfoot{display:table-row-group}
@@ -184,7 +202,7 @@ dialog::backdrop{background:rgba(10,20,40,.55)}
   <header class="topbar">
     <div class="in">
       <a class="brand" href="#/" aria-label="Kas Mudah - ke halaman utama">
-        <img class="brand-logo" src="logo.svg" alt="" data-file="logo.svg">
+        <img class="brand-logo" src="assets/logo.svg" alt="" data-file="logo.svg">
         <span>Kas Mudah</span>
       </a>
       <nav class="nav" aria-label="Menu"><a href="#/pengaturan">Pengaturan</a></nav>
@@ -433,9 +451,9 @@ function showSettings() {
       <h2>Galeri Konsep Logo</h2>
       <p class="muted" style="margin:-6px 0 16px">Tiga konsep logo Kas Mudah. Logo yang dipakai di header aplikasi adalah konsep 3 (struk tersenyum dengan daun).</p>
       <div class="gallery">
-        ${galleryItem('logo-dompet.png', 'Konsep 1', 'Dompet tersenyum', false)}
-        ${galleryItem('logo-koin.png', 'Konsep 2', 'Koin tersenyum', false)}
-        ${galleryItem('logo.svg', 'Konsep 3', 'Struk tersenyum dengan daun', true)}
+        ${galleryItem('assets/logo-dompet.png', 'Konsep 1', 'Dompet tersenyum', false)}
+        ${galleryItem('assets/logo-koin.png', 'Konsep 2', 'Koin tersenyum', false)}
+        ${galleryItem('assets/logo.svg', 'Konsep 3', 'Struk tersenyum dengan daun', true)}
       </div>
     </section>`;
 }
@@ -503,7 +521,7 @@ async function buildBackup() {
   return {
     app: BACKUP_APP, format: BACKUP_FORMAT, dibuat: new Date().toISOString(),
     pengaturan: { noticeOk: !!noticeOk },
-    kegiatan: ks.map(k => ({ id: k.id, nama: k.nama, target: k.target || 0, dibuat: k.dibuat || 0 })),
+    kegiatan: ks.map(k => ({ id: k.id, nama: k.nama, target: k.target || 0, dibuat: k.dibuat || 0, tanggalMulai: k.tanggalMulai || '', tanggalSelesai: k.tanggalSelesai || '', pengaturanSelesai: !!k.pengaturanSelesai })),
     transaksi
   };
 }
@@ -553,7 +571,7 @@ function validateBackup(text) {
     if (typeof k.nama !== 'string' || !k.nama.trim()) throw new Error(no + ': nama kosong.');
     if (!Number.isInteger(k.target) || k.target < 0) throw new Error(no + ': target dana tidak valid.');
     kIds.add(k.id);
-    kegiatan.push({ id: k.id, nama: k.nama.trim(), target: k.target, dibuat: Number.isFinite(k.dibuat) ? k.dibuat : Date.now() });
+    kegiatan.push({ id: k.id, nama: k.nama.trim(), target: k.target, dibuat: Number.isFinite(k.dibuat) ? k.dibuat : Date.now(), tanggalMulai: typeof k.tanggalMulai === 'string' ? k.tanggalMulai : '', tanggalSelesai: typeof k.tanggalSelesai === 'string' ? k.tanggalSelesai : '', pengaturanSelesai: !!k.pengaturanSelesai });
   });
 
   let foto = 0;
@@ -727,11 +745,21 @@ async function showDetail(id) {
     <h1 class="dtitle" id="dTitle">${esc(k.nama)}</h1>
 
     <section class="card">
-      <h2>Pengaturan Kegiatan</h2>
-      <form id="setForm" novalidate>
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">Pengaturan Kegiatan</h2>
+        <button class="btn btn-ghost btn-sm" type="button" data-act="toggle-settings">${k.pengaturanSelesai ? 'Edit Pengaturan' : 'Atur Kegiatan'}</button>
+      </div>
+      <div id="settingsSummary" ${k.pengaturanSelesai ? '' : 'hidden'} style="margin-top:12px">
+        <p class="muted" style="margin:0 0 8px">Nama: <b>${esc(k.nama)}</b></p>
+        <p class="muted" style="margin:0 0 8px">Rentang waktu: <b>${k.tanggalMulai ? tgl(k.tanggalMulai) : '-'} – ${k.tanggalSelesai ? tgl(k.tanggalSelesai) : '-'}</b></p>
+        <p class="muted" style="margin:0">Target dana: <b>${rp(k.target)}</b></p>
+      </div>
+      <form id="setForm" novalidate ${k.pengaturanSelesai ? 'hidden' : ''} style="margin-top:14px">
         <div class="grid2">
-          <div class="f"><label for="s-nama">Nama kegiatan</label><input id="s-nama" name="nama" type="text" maxlength="60" value="${esc(k.nama)}"></div>
+          <div class="f"><label for="s-nama">Nama kegiatan</label><input id="s-nama" name="nama" type="text" maxlength="60" value="${esc(k.nama)}" required></div>
           <div class="f"><label for="s-target">Target dana</label><div class="money"><span>Rp</span><input id="s-target" name="target" inputmode="numeric" autocomplete="off" value="${fmtInput(k.target)}" placeholder="0"></div></div>
+          <div class="f"><label for="s-mulai">Tanggal mulai kegiatan</label><input id="s-mulai" name="tanggalMulai" type="date" value="${esc(k.tanggalMulai || '')}"></div>
+          <div class="f"><label for="s-selesai">Tanggal selesai kegiatan</label><input id="s-selesai" name="tanggalSelesai" type="date" value="${esc(k.tanggalSelesai || '')}"></div>
         </div>
         <p class="err" id="setErr" role="alert"></p>
         <div class="row">
@@ -751,8 +779,13 @@ async function showDetail(id) {
           <div class="f"><label for="f-tgl">Tanggal</label><input id="f-tgl" name="tanggal" type="date"></div>
           <div class="f"><label for="f-jam">Jam</label><input id="f-jam" name="jam" type="time"></div>
           <div class="f span2"><label for="f-item">Nama item atau barang</label><input id="f-item" name="item" type="text" maxlength="120" placeholder="Contoh: Konsumsi rapat"></div>
-          <div class="f"><label for="f-jenis">Jenis transaksi</label>
-            <select id="f-jenis" name="jenis"><option value="">Pilih jenis transaksi…</option><option value="debit">Pemasukan (Debit)</option><option value="kredit">Pengeluaran (Kredit)</option></select></div>
+          <div class="f"><label>Jenis transaksi</label>
+            <div class="tx-types" role="group" aria-label="Jenis transaksi">
+              <button type="button" class="tx-type" data-act="set-type" data-value="debit">＋ Debit (Masuk)</button>
+              <button type="button" class="tx-type" data-act="set-type" data-value="kredit">− Kredit (Keluar)</button>
+            </div>
+            <input type="hidden" id="f-jenis" name="jenis" value="">
+          </div>
           <div class="f"><label for="f-nom">Nominal uang</label><div class="money"><span>Rp</span><input id="f-nom" name="nominal" inputmode="numeric" autocomplete="off" placeholder="0"></div></div>
           <div class="f"><label for="f-struk">Upload struk / bukti transaksi</label><input id="f-struk" name="struk" type="file" accept="image/*"><small id="h-struk"></small></div>
           <div class="f"><label for="f-barang">Upload foto barang</label><input id="f-barang" name="barang" type="file" accept="image/*"><small id="h-barang"></small></div>
@@ -783,6 +816,14 @@ function setDefaults() {
   const f = $('#txForm'); if (!f) return;
   if (!f.tanggal.value) f.tanggal.value = todayStr();
   if (!f.jam.value) f.jam.value = nowStr();
+  syncTypeButtons();
+}
+function syncTypeButtons() {
+  const val = $('#f-jenis')?.value || '';
+  document.querySelectorAll('.tx-type').forEach(b => {
+    b.classList.toggle('active', b.dataset.value === val);
+    b.setAttribute('aria-pressed', b.dataset.value === val ? 'true' : 'false');
+  });
 }
 
 function updateEditUI() {
@@ -801,7 +842,7 @@ async function refreshDetail() {
   curRows = c.rows;
   const sel = cur.target - c.saldo;
   $('#score').innerHTML = `
-    <div class="score s1"><span>Target Dana Keseluruhan</span><strong>${rp(cur.target)}</strong><small>Atur di bagian Pengaturan Kegiatan</small></div>
+    <div class="score s1"><span>Target Dana</span><strong>${rp(cur.target)}</strong><small><button type="button" class="btn btn-ghost btn-sm" data-act="edit-target">✎ Edit Target</button></small></div>
     <div class="score s2"><span>Selisih Target dan Saldo</span><strong>${rp(Math.abs(sel))}</strong><small>${sel < 0 ? 'Kelebihan dari target' : sel === 0 ? 'Target tercapai' : 'Masih kurang dari target'}</small></div>
     <div class="score s3"><span>Total Saldo</span><strong>${rp(c.saldo)}</strong><small>Debit (masuk) − Kredit (keluar)</small></div>`;
 
@@ -838,13 +879,14 @@ async function saveSettings(e) {
   e.preventDefault();
   const f = e.target, err = $('#setErr');
   const nama = f.nama.value.trim();
+  const tanggalMulai = f.tanggalMulai.value;
+  const tanggalSelesai = f.tanggalSelesai.value;
   if (!nama) { err.textContent = 'Nama kegiatan tidak boleh kosong.'; return; }
+  if (tanggalMulai && tanggalSelesai && tanggalSelesai < tanggalMulai) { err.textContent = 'Tanggal selesai tidak boleh sebelum tanggal mulai.'; return; }
   err.textContent = '';
-  cur = Object.assign({}, cur, { nama, target: parseNum(f.target.value) });
+  cur = Object.assign({}, cur, { nama, target: parseNum(f.target.value), tanggalMulai, tanggalSelesai, pengaturanSelesai: true });
   await putK(cur);
-  $('#dTitle').textContent = cur.nama;
-  f.target.value = fmtInput(cur.target);
-  await refreshDetail();
+  await showDetail(cur.id);
   toast('Pengaturan kegiatan disimpan.');
 }
 
@@ -893,7 +935,7 @@ function startEdit(id) {
   editing = t;
   const f = $('#txForm');
   f.tanggal.value = t.tanggal; f.jam.value = t.jam; f.item.value = t.item;
-  f.jenis.value = t.jenis; f.nominal.value = fmtInput(t.nominal); f.keterangan.value = t.keterangan || '';
+  f.jenis.value = t.jenis; syncTypeButtons(); f.nominal.value = fmtInput(t.nominal); f.keterangan.value = t.keterangan || '';
   f.struk.value = ''; f.barang.value = '';
   updateEditUI();
   $('#formTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -913,27 +955,48 @@ function periode(rows) {
 
 function reportSection(k, list, withBreak) {
   const c = compute(list);
-  const img = b => b ? `<img class="pt" src="${pu(b)}" alt="">` : '-';
+  const start = k.tanggalMulai ? tgl(k.tanggalMulai) : (c.rows.length ? tgl(c.rows[0].tanggal) : '-');
+  const end = k.tanggalSelesai ? tgl(k.tanggalSelesai) : (c.rows.length ? tgl(c.rows[c.rows.length - 1].tanggal) : '-');
   const rows = c.rows.length ? c.rows.map((t, i) => `<tr>
       <td>${i + 1}</td><td>${tgl(t.tanggal)}<br>${jam(t.jam)}</td><td>${esc(t.item)}</td>
       <td class="n">${t.jenis === 'debit' ? rp(t.nominal) : '-'}</td>
       <td class="n">${t.jenis === 'kredit' ? rp(t.nominal) : '-'}</td>
-      <td class="n"><b>${rp(t.saldo)}</b></td>
-      <td>${img(t.struk)}</td><td>${img(t.barang)}</td><td>${esc(t.keterangan) || '-'}</td></tr>`).join('') : '';
-  return `<section class="${withBreak ? 'brk' : ''}">
-    <h2>${esc(k.nama)}</h2>
-    <p class="per">Periode transaksi: ${periode(c.rows)}</p>
-    <table><tbody>
-      <tr><th>Target dana</th><td>${rp(k.target)}</td><th>Total pemasukan</th><td>${rp(c.masuk)}</td></tr>
-      <tr><th>Total pengeluaran</th><td>${rp(c.keluar)}</td><th>Saldo akhir</th><td>${rp(c.saldo)}</td></tr>
-      <tr><th>Selisih target dan saldo</th><td colspan="3">${selisihText(k.target, c.saldo)}</td></tr>
-    </tbody></table>
-    ${c.rows.length ? `<table class="rtx"><thead><tr>
-      <th>No</th><th>Tanggal</th><th>Items</th><th>Debit</th><th>Kredit</th><th>Saldo</th><th>Struk</th><th>Barang</th><th>Keterangan</th></tr></thead>
+      <td class="n"><b>${rp(t.saldo)}</b></td><td>${esc(t.keterangan) || '-'}</td></tr>`).join('') : '';
+  let html = `<section class="${withBreak ? 'brk' : ''}">
+    <div class="rhead"><div><b>Kas Mudah</b><br><span>Laporan Kas Kegiatan</span></div><span>Dicetak: ${tgl(todayStr())}</span></div>
+    <h2 class="cover-title">${esc(k.nama)}</h2>
+    <p class="cover-sub">Rentang waktu kegiatan: ${start} – ${end}</p>
+    <div class="scoregrid">
+      <div class="scorebox"><b>Uang Rencana (Target Dana)</b><strong>${rp(k.target || 0)}</strong></div>
+      <div class="scorebox"><b>Uang Pelaksanaan (Realisasi Masuk)</b><strong>${rp(c.masuk)}</strong></div>
+      <div class="scorebox"><b>Saldo Sisa</b><strong>${rp(c.saldo)}</strong></div>
+    </div>
+    <p class="per">Selisih target dengan saldo: <b>${selisihText(k.target || 0, c.saldo)}</b> · Total pengeluaran: <b>${rp(c.keluar)}</b></p>
+    <h2 style="margin-top:14px">Tabel Kas</h2>
+    ${c.rows.length ? `<table class="rtx"><thead><tr><th>No</th><th>Tanggal</th><th>Items</th><th>Debit (Masuk)</th><th>Kredit (Keluar)</th><th>Saldo</th><th>Keterangan</th></tr></thead>
       <tbody>${rows}</tbody>
-      <tfoot><tr class="tot"><td colspan="3">Total</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.keluar)}</td><td class="n">${rp(c.saldo)}</td><td colspan="3"></td></tr></tfoot></table>`
+      <tfoot><tr class="tot"><td colspan="3">Total</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.keluar)}</td><td class="n">${rp(c.saldo)}</td><td></td></tr></tfoot></table>`
       : '<div class="none">Belum ada transaksi pada kegiatan ini.</div>'}
   </section>`;
+
+  // Lampiran dimulai pada halaman berikutnya; maksimal 2 transaksi per halaman.
+  const chunks = [];
+  for (let i = 0; i < c.rows.length; i += 2) chunks.push(c.rows.slice(i, i + 2));
+  chunks.forEach((pair, pageIndex) => {
+    const cards = pair.map((t, idx) => {
+      const photo = (blob, label) => blob
+        ? `<figure><figcaption>${label}</figcaption><img class="evidence" src="${pu(blob)}" alt="${label}"></figure>`
+        : `<figure><figcaption>${label}</figcaption><div class="no-evidence">Tidak dilampirkan</div></figure>`;
+      return `<article class="attachment-item">
+        <h3>Transaksi ${c.rows.indexOf(t) + 1} · ${esc(t.item)}</h3>
+        <p style="margin:0 0 8px">Tanggal: ${tgl(t.tanggal)} ${jam(t.jam)} · Jenis: ${t.jenis === 'debit' ? 'Debit (Masuk)' : 'Kredit (Keluar)'} · Nominal: ${rp(t.nominal)} · Saldo setelah transaksi: ${rp(t.saldo)}</p>
+        ${t.keterangan ? `<p style="margin:0 0 8px">Keterangan: ${esc(t.keterangan)}</p>` : ''}
+        <div class="attachment-grid">${photo(t.struk, 'Bukti transaksi / struk')}${photo(t.barang, 'Foto barang')}</div>
+      </article>`;
+    }).join('');
+    html += `<section class="attachment-page"><div class="rhead"><div><b>Kas Mudah</b><br><span>Lampiran Bukti Transaksi</span></div><span>${esc(k.nama)} · Halaman lampiran ${pageIndex + 1}</span></div>${cards}</section>`;
+  });
+  return html;
 }
 
 async function exportReport(ids) {
@@ -942,31 +1005,22 @@ async function exportReport(ids) {
   if (!sel.length) { toast('Belum ada kegiatan untuk diekspor.', 'err'); return; }
   toast('Menyiapkan laporan…');
   clearPrint();
-
   const semua = !ids;
-  const d = new Date();
-  const dicetak = `${tgl(todayStr())}, ${jam(nowStr())}`;
-  let html = `<div class="rhead"><div><b>Kas Mudah</b><br>${semua ? 'Laporan Seluruh Kegiatan' : 'Laporan Kegiatan'}</div><span>Dicetak: ${dicetak}</span></div>`;
-
+  let html = '';
   if (semua) {
-    let gm = 0, gk = 0, gs = 0, gt = 0;
-    const rows = sel.map(k => {
+    const summaries = sel.map(k => {
       const c = compute(ts.filter(t => t.kegiatanId === k.id));
-      gm += c.masuk; gk += c.keluar; gs += c.saldo; gt += k.target;
-      return `<tr><td>${esc(k.nama)}</td><td class="n">${rp(k.target)}</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.keluar)}</td><td class="n"><b>${rp(c.saldo)}</b></td><td class="n">${selisihText(k.target, c.saldo)}</td></tr>`;
+      return `<tr><td>${esc(k.nama)}</td><td>${k.tanggalMulai ? tgl(k.tanggalMulai) : '-'} – ${k.tanggalSelesai ? tgl(k.tanggalSelesai) : '-'}</td><td class="n">${rp(k.target || 0)}</td><td class="n">${rp(c.masuk)}</td><td class="n">${rp(c.saldo)}</td></tr>`;
     }).join('');
-    html += `<h2>Ringkasan Seluruh Kegiatan</h2><p class="per">${sel.length} kegiatan</p>
-      <table><thead><tr><th>Kegiatan</th><th>Target dana</th><th>Pemasukan</th><th>Pengeluaran</th><th>Saldo akhir</th><th>Selisih target</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot><tr class="tot"><td>Total</td><td class="n">${rp(gt)}</td><td class="n">${rp(gm)}</td><td class="n">${rp(gk)}</td><td class="n">${rp(gs)}</td><td class="n">${selisihText(gt, gs)}</td></tr></tfoot></table>`;
+    html += `<section><div class="rhead"><div><b>Kas Mudah</b><br><span>Laporan Seluruh Kegiatan</span></div><span>Dicetak: ${tgl(todayStr())}</span></div><h2 class="cover-title">Ringkasan Seluruh Kegiatan</h2>
+      <table><thead><tr><th>Nama kegiatan</th><th>Rentang waktu kegiatan</th><th>Uang rencana</th><th>Uang pelaksanaan (masuk)</th><th>Saldo sisa</th></tr></thead><tbody>${summaries}</tbody></table></section>`;
     html += sel.map(k => reportSection(k, ts.filter(t => t.kegiatanId === k.id), true)).join('');
   } else {
-    html += sel.map(k => reportSection(k, ts.filter(t => t.kegiatanId === k.id), false)).join('');
+    html += reportSection(sel[0], ts.filter(t => t.kegiatanId === sel[0].id), false);
   }
 
   const area = $('#printArea');
   area.innerHTML = html;
-  // Tunggu semua gambar lokal siap sebelum dialog cetak dibuka
   await Promise.all([...area.querySelectorAll('img')].map(im =>
     im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
 
@@ -1009,6 +1063,30 @@ document.addEventListener('click', async e => {
         break;
       }
       case 'notice-ok': await setMeta('noticeOk', true); b.closest('.notice').remove(); break;
+      case 'toggle-settings': {
+        const form = $('#setForm'), summary = $('#settingsSummary');
+        const show = form.hidden;
+        form.hidden = !show;
+        summary.hidden = show;
+        b.textContent = show ? 'Tutup Pengaturan' : 'Edit Pengaturan';
+        if (show) $('#s-nama').focus();
+        break;
+      }
+      case 'edit-target': {
+        const value = await askText('Edit Target Dana', 'Target dana (angka rupiah)', String(cur.target || 0), 'Simpan');
+        if (value === null) return;
+        const target = parseNum(value);
+        cur.target = target;
+        await putK(cur);
+        await showDetail(cur.id);
+        toast('Target dana diperbarui.');
+        break;
+      }
+      case 'set-type': {
+        $('#f-jenis').value = b.dataset.value;
+        syncTypeButtons();
+        break;
+      }
       case 'backup': {
         b.disabled = true; b.textContent = 'Menyiapkan backup…';
         try { await doBackup(); }
